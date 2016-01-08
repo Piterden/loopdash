@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "dashboarddb"
+  },
+  "AccessToken": {
+    "dataSource": "dashboarddb",
+    "public": false
+  },
+  "ACL": {
+    "dataSource": "dashboarddb",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "dashboarddb",
+    "public": false
+  },
+  "Role": {
+    "dataSource": "dashboarddb",
+    "public": false
+  },
+  "Event": {
+    "dataSource": "dashboarddb",
+    "public": true
+  },
+  "Document": {
+    "dataSource": "dashboarddb",
+    "public": true
+  },
+  "Person": {
+    "dataSource": "dashboarddb",
+    "public": true
+  }
+}

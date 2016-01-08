@@ -1,0 +1,475 @@
+<!doctype html>
+<html>
+
+<head>
+    <link href="./codebase/skins/terrace.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="./codebase/webix.js"></script>
+    <script type="text/javascript" src="./codebase/scheduler.js"></script>
+</head>
+
+<body>
+    <script>
+        webix.ready(function() {
+
+            //path from which extra libraries are autoloaded
+            //webix.codebase = "./";
+
+            function custom_checkbox(obj, common, value) {
+                if (value) {
+                    return "<div class='webix_table_checkbox checked'> ВКЛ </div>";
+                } else {
+                    return "<div class='webix_table_checkbox notchecked'> ВЫКЛ </div>";
+                }
+            }
+
+            /**
+             * Helpers
+             */
+            function getActiveEntity() {
+                return $$("tabbar").data.value;
+            }
+
+
+            function showModal() {
+                var a = this.data.action;
+                var en = getActiveEntity();
+                if (a != "add") {
+                    $$("form" + a + en).bind($$(en));
+                }
+                $$("modal" + a + en).show();
+            }
+
+            dp = new webix.DataCollection({
+                id: "eventsdata",
+                url: "rest->/api/events",
+                save: "rest->/api/events",
+                ready: function() {
+                	console.log(dp.serialize());
+                    $$("events").getScheduler().parse(dp.serialize());
+                }
+            });
+
+            var scheduler = {
+                id: "events",
+                view: "dhx-scheduler",
+                date: new Date(2016, 1, 5),
+                mode: "month",
+                init: function() {
+                    //console.log(scheduler);
+                    var formatFunc = this.getScheduler().date.str_to_date("%Y-%m-%d %H:%i:%s");
+                    this.getScheduler().templates.xml_date = function(date_string) {
+                        window["date_string"] = date_string;
+                        return formatFunc(date_string.substr(0, date_string.indexOf("T")) + " " + date_string.substr(date_string.indexOf("T") + 1, date_string.indexOf(".") - date_string.indexOf("T") - 1));
+                    }
+                    this.getScheduler().config.xml_date = "%Y-%m-%d %H:%i:%s";
+                    this.getScheduler().config.first_hour = 6;
+                    this.getScheduler().config.multi_day = false;
+                },
+                ready: function() {
+                    this.getScheduler().parse(dp.serialize(), "json");
+                    this.getScheduler().attachEvent("onEventChanged", function(id, ev) {
+                        console.log(this, id, ev);
+                    });
+                }
+            };
+
+
+            //dp.init(webix.ui(scheduler));
+            //dp.setTransactionMode("REST");
+
+            /**
+             * Data templates
+             */
+            var events = {
+                cols: [/*{
+                        id: "events",
+                        view: "datatable",
+                        select: "row",
+                        //autoConfig: true,
+                        width: 200,
+                        editable: true,
+                        columns: [{
+                            id: "name",
+                            header: "Название",
+                            width: 184,
+                        }],
+                        editaction: "dblclick",
+                        form: "modaleditevents",
+                        url: "rest->/api/events",
+                        save: "rest->/api/events"
+                    },*/
+                    scheduler
+                ]
+            };
+            var persons = {
+                id: "persons",
+                view: "datatable",
+                select: "row",
+                autoConfig: true,
+                editable: false,
+                editaction: "dblclick",
+                form: "modaleditpersons",
+                url: "rest->/api/people",
+                save: "rest->/api/people"
+            };
+            var documents = {
+                id: "documents",
+                view: "datatable",
+                select: "row",
+                autoConfig: true,
+                editable: false,
+                editaction: "dblclick",
+                form: "modaleditdocuments",
+                url: "rest->/api/documents",
+                save: "rest->/api/documents"
+            };
+
+            /**
+             * Main layout
+             */
+            webix.ui({
+                rows: [{
+                    view: "tabbar",
+                    id: "tabbar",
+                    value: "events",
+                    multiview: true,
+                    options: [{
+                        value: "Календарь",
+                        id: "events"
+                    }, {
+                        value: "Люди",
+                        id: "persons"
+                    }, {
+                        value: "Документы",
+                        id: "documents"
+                    }]
+                }, {
+                    view: "toolbar",
+                    id: "toolbar",
+                    elementsConfig: {
+                        gravity: 2,
+                        align: "center",
+                        type: "icon",
+                        height: 46,
+                        adjust: true
+                    },
+                    elements: [{
+                        id: "actionbuttons",
+                        cols: [{
+                            view: "button",
+                            icon: "plus-square-o",
+                            label: "Добавить",
+                            action: "add",
+                            click: showModal
+                        }, {
+                            view: "button",
+                            icon: "edit",
+                            label: "Редактировать",
+                            action: "edit",
+                            click: showModal
+                        }, {
+                            view: "button",
+                            icon: "times",
+                            label: "Удалить",
+                            action: "remove",
+                            click: showModal
+                        }]
+                    }, {
+                        cols: [{
+                            gravity: 4
+                        }, {
+                            view: "search",
+                            placeholder: "Поиск...",
+                            gravity: 2
+                        }]
+                    }]
+                }, {
+                    view: "multiview",
+                    cells: [events, persons, documents],
+                    animate: {
+                        subtype: "in"
+                    }
+                }]
+            });
+
+            /**
+             * Popup modals
+             */
+            function prepareModal(a, en) {
+                //console.log("modal" + a + en);
+
+                var fields = {
+                    events: [{
+                        name: "name",
+                        view: "text",
+                        label: "Название"
+                    }, {
+                        name: "text",
+                        view: "text",
+                        label: "Описание"
+                    }, {
+                        name: "start_date",
+                        view: "datepicker",
+                        label: "Дата начала"
+                    }, {
+                        name: "end_date",
+                        view: "datepicker",
+                        label: "Дата окончания"
+                    }, {
+                        name: "status",
+                        view: "select",
+                        label: "Статус",
+                        options: ["", "Активно", "Закрыто"]
+                    }, {
+                        name: "state",
+                        view: "checkbox",
+                        label: "Состояние"
+                    }, {
+                        view: "button",
+                        value: "Submit",
+                        click: function() {
+                            var data = this.getFormView().getValues();
+                            console.log(data);
+                            switch (a) {
+                                case "add":
+                                    $$(en + "data").add(data);
+                                    //webix.ajax().post(en + "/" + data.id, data);
+                                    break;
+                                case "edit":
+                                    $$(en + "data").updateItem(data.id, data);
+                                    //webix.ajax().put(en + "/" + data.id, data);
+                                    break;
+                            }
+                            this.getTopParentView().hide();
+                        }
+                    }, {
+                        name: "action",
+                        view: "text",
+                        value: a,
+                        hidden: true
+                    }, {
+                        name: "id",
+                        view: "text",
+                        hidden: true
+                    }],
+                    persons: [{
+                        name: "firstname",
+                        view: "text",
+                        label: "Имя"
+                    }, {
+                        name: "lastname",
+                        view: "text",
+                        label: "Фамилия"
+                    }, {
+                        name: "description",
+                        view: "text",
+                        label: "Описание"
+                    }, {
+                        name: "arrival_date",
+                        view: "datepicker",
+                        label: "Прибытие"
+                    }, {
+                        name: "email",
+                        view: "text",
+                        label: "E-mail"
+                    }, {
+                        name: "status",
+                        view: "select",
+                        label: "Статус",
+                        options: ["", "Активно", "Закрыто"]
+                    }, {
+                        name: "state",
+                        view: "checkbox",
+                        label: "Состояние"
+                    }, {
+                        view: "button",
+                        value: "Submit",
+                        click: function() {
+                            var data = this.getFormView().getValues();
+                            console.log(data);
+                            switch (a) {
+                                case "add":
+                                    $$(en + "data").add(data);
+                                    //webix.ajax().post(en + "/" + data.id, data);
+                                    break;
+                                case "edit":
+                                    $$(en + "data").updateItem(data.id, data);
+                                    //webix.ajax().put(en + "/" + data.id, data);
+                                    break;
+                            }
+                            this.getTopParentView().hide();
+                        }
+                    }, {
+                        name: "action",
+                        view: "text",
+                        value: a,
+                        hidden: true
+                    }, {
+                        name: "id",
+                        view: "text",
+                        hidden: true
+                    }],
+                    documents: [{
+                        name: "docname",
+                        view: "text",
+                        label: "Название"
+                    }, {
+                        name: "content",
+                        view: "text",
+                        label: "Содержание"
+                    }, {
+                        name: "create_date",
+                        view: "datepicker",
+                        label: "Дата публикации"
+                    }, {
+                        name: "published",
+                        view: "checkbox",
+                        label: "Опубликовано"
+                    }, {
+                        name: "status",
+                        view: "select",
+                        label: "Статус",
+                        options: ["", "Активно", "Закрыто"]
+                    }, {
+                        name: "state",
+                        view: "checkbox",
+                        label: "Состояние"
+                    }, {
+                        view: "button",
+                        value: "Submit",
+                        click: function() {
+                            var data = this.getFormView().getValues();
+                            console.log(data);
+                            switch (a) {
+                                case "add":
+                                    $$(en + "data").add(data);
+                                    //webix.ajax().post(en + "/" + data.id, data);
+                                    break;
+                                case "edit":
+                                    $$(en + "data").updateItem(data.id, data);
+                                    //webix.ajax().put(en + "/" + data.id, data);
+                                    break;
+                            }
+                            this.getTopParentView().hide();
+                        }
+                    }, {
+                        name: "action",
+                        view: "text",
+                        value: a,
+                        hidden: true
+                    }, {
+                        name: "id",
+                        view: "text",
+                        hidden: true
+                    }]
+                }
+
+                var form = [{
+                    view: "toolbar",
+                    cols: [{
+                        view: "label",
+                        label: a + " " + en
+                    }, {
+                        view: "button",
+                        label: "Close",
+                        width: 70,
+                        align: "right",
+                        click: function() {
+                            this.getTopParentView().hide();
+                        }
+                    }]
+                }, {
+                    rows: fields[en]
+                }];
+
+                if (a == "remove") {
+                    form = [{
+                        view: "toolbar",
+                        cols: [{
+                            view: "label",
+                            label: "Удалить запись!!!"
+                        }, {
+                            view: "button",
+                            label: "Close",
+                            width: 70,
+                            align: "right",
+                            click: function() {
+                                this.getTopParentView().hide();
+                            }
+                        }]
+                    }, {
+                        rows: [{
+                            view: "button",
+                            value: "Удалить",
+                            align: "center",
+                            width: 100,
+                            click: function() {
+                                var data = this.getFormView().getValues();
+                                //webix.ajax().del(en + "/" + data.id);
+                                //console.log(data);
+                                $$(en).remove($$(en).getSelectedId(true));
+                                this.getTopParentView().hide();
+                            }
+                        }, {
+                            view: "button",
+                            align: "center",
+                            width: 100,
+                            value: "Отмена"
+                        }, {
+                            name: "action",
+                            view: "text",
+                            value: "delete",
+                            hidden: true
+                        }, {
+                            name: "id",
+                            view: "text",
+                            hidden: true
+                        }]
+                    }];
+                }
+
+                webix.ui({
+                    view: "popup",
+                    hidden: true,
+                    id: "modal" + a + en,
+                    //modal: true,
+                    move: true,
+                    position: "center",
+                    body: {
+                        view: "form",
+                        id: "form" + a + en,
+                        width: 500,
+                        //complexData: true,
+                        borderless: true,
+                        elements: form,
+                        //data: $$(en),
+                        //rules: {
+                        //    "email": webix.rules.isEmail,
+                        //    "login": webix.rules.isNotEmpty
+                        //},
+                        elementsConfig: {
+                            labelPosition: "top"
+                        }
+                    }
+                });
+            }
+
+            var enArr = $$("tabbar").data.options;
+            var i = 0;
+            for (i; i <= enArr.length - 1; i++) {
+                var aArr = $$("actionbuttons").getChildViews();
+                var k = 0;
+                for (k; k <= aArr.length - 1; k++) {
+                    //console.log(aArr[k].data.action, enArr[i].id);
+                    prepareModal(aArr[k].data.action, enArr[i].id);
+                }
+            }
+
+            //$$("scheduler").config.xml_date
+            //console.log($$("scheduler"));
+
+        });
+    </script>
+</body>
+
+</html>

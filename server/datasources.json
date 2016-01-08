@@ -1,0 +1,14 @@
+{
+  "db": {
+    "name": "db",
+    "connector": "memory"
+  },
+  "dashboarddb": {
+    "host": "localhost",
+    "port": "27017",
+    "database": "loopdash",
+    "password": "Mic50keY",
+    "name": "dashboarddb",
+    "connector": "mongodb"
+  }
+}
