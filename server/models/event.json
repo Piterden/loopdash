@@ -1,34 +1,58 @@
 {
-  "name": "Event",
-  "base": "PersistedModel",
-  "idInjection": true,
-  "options": {
-    "validateUpsert": true
-  },
-  "properties": {
-    "name": {
-      "type": "string",
-      "required": true
+    "name": "Event",
+    "base": "PersistedModel",
+    "idInjection": true,
+    "options": {
+        "validateUpsert": true
     },
-    "text": {
-      "type": "string"
+    "properties": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "text": {
+            "type": "string"
+        },
+        "start_date": {
+            "type": "date",
+            "required": true
+        },
+        "end_date": {
+            "type": "date"
+        },
+        "status": {
+            "type": "string"
+        },
+        "state": {
+            "type": "boolean"
+        },
+        "taskId": {
+            "type": "number"
+        },
+        "startTimezone": {
+        	"type": "string"
+        },
+        "endTimezone": {
+        	"type": "string"
+        },
+        "recurrenceId": {
+        	"type": "string"
+        },
+        "recurrenceRule": {
+        	"type": "string"
+        },
+        "recurrenceException": {
+        	"type": "string"
+        },
+        "ownerId": {
+        	"type": "string"
+        },
+        "isAllDay": {
+            "type": "boolean"
+        }
     },
-    "start_date": {
-      "type": "date",
-      "required": true
-    },
-    "end_date": {
-      "type": "date"
-    },
-    "status": {
-      "type": "string"
-    },
-    "state": {
-      "type": "boolean"
-    }
-  },
-  "validations": [],
-  "relations": {},
-  "acls": [],
-  "methods": {}
+    "validations": [],
+    "relations": {},
+    "acls": [],
+    "methods": {}
 }
