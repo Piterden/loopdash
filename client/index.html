@@ -17,13 +17,18 @@
     <script>
         kendo.culture("ru-RU");
 
-        eventsData = new kendo.data.SchedulerDataSource({
-            autoSync: true,
+        var eventsData = new kendo.data.SchedulerDataSource({
+            //autoSync: true,
             batch: true,
             transport: {
                 parameterMap: function(data, type) {
-                    switch (type) {
+                    if (type !== "read") {
+                        return kendo.stringify(data);
+                    }
+
+/*                    switch (type) {
                         case "create":
+                            console.log(data, this.cache.find());
                             return kendo.stringify({
                                 "name": data["name"],
                                 "text": data["text"],
@@ -48,7 +53,7 @@
                         case "destroy":
                             return kendo.stringify(data);
                             break;
-                    }
+                    }*/
                 },
                 /*create: function(o) {
                     console.log("create ", o);
@@ -76,33 +81,34 @@
                     console.log("destroy ", o);
                 }*/
                 create: {
-                	contentType: "application/json",
-                	type: "POST",
-                	dataType: "json",
-                	data: function(data) {
-                		return data.models[0];
-                	},
-                	url: "/api/events"
+                    contentType: "application/json",
+                    type: "POST",
+                    dataType: "json",
+                    data: function(data) {
+                        return data.models[0];
+                    },
+                    url: "/api/events"
                 },
                 read: {
-                	contentType: "application/json",
-                	type: "GET",
-                	dataType: "json",
-                	url: "/api/events"
+                    contentType: "application/json",
+                    type: "GET",
+                    dataType: "json",
+                    url: "/api/events"
                 },
                 update: {
-                	contentType: "application/json",
-                	type: "PUT",
-                	dataType: "json",
-                	url: "/api/events"
+                    contentType: "application/json",
+                    type: "PUT",
+                    dataType: "json",
+                    url: "/api/events"
                 },
                 destroy: {
-                	contentType: "application/json",
-                	type: "DELETE",
-                	dataType: "json",
-                	url: function(data) {
-                		return "/api/events/" + data.models[0].id;
-                	}
+                    contentType: "application/json",
+                    type: "DELETE",
+                    dataType: "json",
+                    url: function(data) {
+                    	console.log(data);
+                        return "/api/events/" + data.models[0].id;
+                    }
                 }
             },
             schema: {
@@ -186,28 +192,28 @@
                     command: "workDay"
                 },
                 add: function(e) {
-                    e.preventDefault();
-                    console.log(e);
-                    e.sender.showDialog();
-                    if (e.event.dirty) {
-                        //eventsData.fetch(function(a) {
-	                    //    //console.log(a, this);
-                        //    //dataSource.sync();
-                        //});
+                        //e.preventDefault();
+                        console.log(e.sender);
+                        //e.sender.showDialog(e.event);
+                        if (e.event.dirty) {
+                            //eventsData.fetch(function(a) {
+                            //    //console.log(a, this);
+                            //    //dataSource.sync();
+                            //});
+                        }
                     }
-                },
-                //moveEnd: function(e) {
-                //        //e.preventDefault();
-                //        if (e.event.dirty) {
-                //            //console.log(e);
-                //        }
-                //    }
-                //    /*,
-                //                    save: function(e) {
-                //                        if (e.event.dirty) {
-                //                            console.log(e);
-                //                        }
-                //                    }*/
+                    //moveEnd: function(e) {
+                    //        //e.preventDefault();
+                    //        if (e.event.dirty) {
+                    //            //console.log(e);
+                    //        }
+                    //    }
+                    //    /*,
+                    //                    save: function(e) {
+                    //                        if (e.event.dirty) {
+                    //                            console.log(e);
+                    //                        }
+                    //                    }*/
             });
 
             var scheduler = $("#scheduler").data("kendoScheduler");
