@@ -7,18 +7,173 @@
     <link href="styles/kendo.default.min.css" rel="stylesheet">
     <script src="js/jquery.min.js"></script>
     <script src="js/kendo.web.min.js"></script>
+    <script src="js/kendo.timezones.min.js"></script>
+    <script src="js/cultures/kendo.culture.ru-RU.min.js"></script>
+    <script src="js/messages/kendo.messages.ru-RU.min.js"></script>
 </head>
 
 <body>
     <div id="scheduler"></div>
     <script>
-        //console.log(new Date("2013/4/4 12:00").toISOString());
+        kendo.culture("ru-RU");
+
+        eventsData = new kendo.data.SchedulerDataSource({
+            autoSync: true,
+            batch: true,
+            transport: {
+                parameterMap: function(data, type) {
+                    switch (type) {
+                        case "create":
+                            return kendo.stringify({
+                                "name": data["name"],
+                                "text": data["text"],
+                                "start_date": data["start_date"],
+                                "end_date": data["end_date"],
+                                "status": data["status"],
+                                "state": data["state"],
+                                "taskId": data["taskId"],
+                                "startTimezone": data["startTimezone"],
+                                "endTimezone": data["endTimezone"],
+                                "recurrenceId": data["recurrenceId"],
+                                "recurrenceRule": data["recurrenceRule"],
+                                "recurrenceException": data["recurrenceException"],
+                                "ownerId": data["ownerId"],
+                                "isAllDay": data["isAllDay"]
+                            });
+                            break;
+                        case "read":
+                            return data;
+                            break;
+                        case "update":
+                        case "destroy":
+                            return kendo.stringify(data);
+                            break;
+                    }
+                },
+                /*create: function(o) {
+                    console.log("create ", o);
+                },
+                read: function(o) {
+                    console.log("read ", o);
+                    $.ajax({
+                            url: '/api/events',
+                            type: 'GET',
+                            dataType: 'json',
+                            data: {},
+                        })
+                        .done(function(data) {
+                            o.success(data);
+                        })
+                        .fail(function(data) {
+                            o.error(data);
+                        });
+
+                },
+                update: function(o) {
+                    console.log("update ", o);
+                },
+                destroy: function(o) {
+                    console.log("destroy ", o);
+                }*/
+                create: {
+                	contentType: "application/json",
+                	type: "POST",
+                	dataType: "json",
+                	data: function(data) {
+                		return data.models[0];
+                	},
+                	url: "/api/events"
+                },
+                read: {
+                	contentType: "application/json",
+                	type: "GET",
+                	dataType: "json",
+                	url: "/api/events"
+                },
+                update: {
+                	contentType: "application/json",
+                	type: "PUT",
+                	dataType: "json",
+                	url: "/api/events"
+                },
+                destroy: {
+                	contentType: "application/json",
+                	type: "DELETE",
+                	dataType: "json",
+                	url: function(data) {
+                		return "/api/events/" + data.models[0].id;
+                	}
+                }
+            },
+            schema: {
+                model: {
+                    id: "eventID",
+                    fields: {
+                        eventID: {
+                            editable: false,
+                            nullable: true,
+                            from: "id",
+                            type: "string"
+                        },
+                        title: {
+                            from: "name",
+                            defaultValue: "No title",
+                            validation: {
+                                required: true
+                            }
+                        },
+                        start: {
+                            type: "date",
+                            from: "start_date",
+                            defaultValue: new Date(),
+                            validation: {
+                                required: true
+                            }
+                        },
+                        end: {
+                            type: "date",
+                            from: "end_date"
+                        },
+                        description: {
+                            from: "text"
+                        },
+                        isAllDay: {
+                            type: "boolean",
+                            from: "IsAllDay"
+                        },
+                        startTimezone: {
+                            from: "StartTimezone",
+                            defaultValue: "Europe/Moscow"
+                        },
+                        endTimezone: {
+                            from: "EndTimezone",
+                            defaultValue: "Europe/Moscow"
+                        },
+                        recurrenceId: {
+                            from: "RecurrenceID"
+                        },
+                        recurrenceRule: {
+                            from: "RecurrenceRule"
+                        },
+                        recurrenceException: {
+                            from: "RecurrenceException"
+                        },
+                        ownerId: {
+                            from: "OwnerID",
+                            defaultValue: 1
+                        }
+                    }
+                }
+            }
+        });
+
         $(function() {
             $("#scheduler").kendoScheduler({
-                date: new Date("2016/1/1"),
-                startTime: new Date("2016/1/1 7:00"),
-                //height: 600,
-                timezone: "Etc/UTC",
+                date: new Date(),
+                startTime: new Date(),
+                timezone: "Europe/Moscow",
+                dataSource: eventsData,
+                //selectable: true,
                 views: [
                     "day",
                     "week", {
@@ -27,170 +182,38 @@
                     },
                     "agenda"
                 ],
-                timezone: "Etc/UTC",
-                dataSource: {
-                    //batch: true,
-                    transport: {
-                        parameterMap: function(data, type) {
-                            switch (type) {
-                                case "create":
-                                    return kendo.stringify({
-                                        "name": data["name"],
-                                        "text": data["text"],
-                                        "start_date": data["start_date"],
-                                        "end_date": data["end_date"],
-                                        "status": data["status"],
-                                        "state": data["state"],
-                                        "taskId": data["taskId"],
-                                        "startTimezone": data["startTimezone"],
-                                        "endTimezone": data["endTimezone"],
-                                        "recurrenceId": data["recurrenceId"],
-                                        "recurrenceRule": data["recurrenceRule"],
-                                        "recurrenceException": data["recurrenceException"],
-                                        "ownerId": data["ownerId"],
-                                        "isAllDay": data["isAllDay"]
-                                    });
-                                    break;
-                                case "read":
-                                    return data;
-                                    break;
-                                case "destroy":
-
-                                    break;
-                            }
-                            return kendo.stringify(data);
-                        },
-                        read: function(o) {
-                                console.log(o);
-                                $.ajax({
-                                        url: '/api/events',
-                                        type: 'GET',
-                                        dataType: 'json',
-                                        data: {},
-                                    })
-                                    .done(function(data) {
-                                        o.success(data);
-                                    })
-                                    .fail(function(data) {
-                                        o.error(data);
-                                    });
-
-                            }
-                            /*{
-                                url: function() {
-                                    return "api/events";
-                                },
-                                dataType: "json",
-                                contentType: "application/json",
-                                type: "GET"
-                            }*/
-                            ,
-                        update: function(o) {
-                                console.log(o);
-                            }
-                            /*{
-                                url: function() {
-                                    return "api/events";
-                                },
-                                dataType: "json",
-                                contentType: "application/json",
-                                type: "PUT"
-                            }*/
-                            ,
-                        create: function(o) {
-                                console.log(o);
-                            }
-                            /*{
-                                url: function() {
-                                    return "api/events";
-                                },
-                                dataType: "json",
-                                contentType: "application/json",
-                                type: "POST"
-                            }*/
-                            ,
-                        destroy: function(o) {
-                                console.log(o);
-                            }
-                            /*{
-                                url: function(data) {
-                                    return "api/events/" + data.id;
-                                },
-                                dataType: "json",
-                                contentType: "application/json",
-                                type: "DELETE"
-                            }*/
-                    },
-                    schema: {
-                        model: {
-                            id: "taskID",
-                            fields: {
-                                taskId: {
-                                    editable: false,
-                                    from: "id",
-                                    type: "string"
-                                },
-                                title: {
-                                    from: "name",
-                                    defaultValue: "No title",
-                                    validation: {
-                                        required: true
-                                    }
-                                },
-                                start: {
-                                    type: "date",
-                                    from: "start_date",
-                                    defaultValue: new Date(),
-                                    validation: {
-                                    	required:true
-                                    }
-                                },
-                                end: {
-                                    type: "date",
-                                    from: "end_date"
-                                },
-                                description: {
-                                    from: "text"
-                                },
-                                isAllDay: {
-                                    type: "boolean",
-                                    from: "IsAllDay"
-                                },
-                                startTimezone: {
-                                    from: "StartTimezone",
-                                    defaultValue: "Etc/UTC"
-                                },
-                                endTimezone: {
-                                    from: "EndTimezone",
-                                    defaultValue: "Etc/UTC"
-                                },
-                                /*
-                                recurrenceId: {
-                                    from: "RecurrenceID",
-                                    defaultValue: 1
-                                },
-                                recurrenceRule: {
-                                    from: "RecurrenceRule",
-                                    defaultValue: 1
-                                },
-                                recurrenceException: {
-                                    from: "RecurrenceException",
-                                    defaultValue: 1
-                                },*/
-                                ownerId: {
-                                    from: "OwnerID",
-                                    defaultValue: 1
-                                }
-                            }
-                        }
+                footer: {
+                    command: "workDay"
+                },
+                add: function(e) {
+                    e.preventDefault();
+                    console.log(e);
+                    e.sender.showDialog();
+                    if (e.event.dirty) {
+                        //eventsData.fetch(function(a) {
+	                    //    //console.log(a, this);
+                        //    //dataSource.sync();
+                        //});
                     }
-                }
+                },
+                //moveEnd: function(e) {
+                //        //e.preventDefault();
+                //        if (e.event.dirty) {
+                //            //console.log(e);
+                //        }
+                //    }
+                //    /*,
+                //                    save: function(e) {
+                //                        if (e.event.dirty) {
+                //                            console.log(e);
+                //                        }
+                //                    }*/
             });
 
             var scheduler = $("#scheduler").data("kendoScheduler");
 
             $("#date").kendoDatePicker({
-                value: new Date("2013/6/13"),
+                value: new Date(),
                 change: function() {
                     scheduler.date(this.value());
                 }
